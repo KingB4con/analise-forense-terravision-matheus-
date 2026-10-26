@@ -1,2 +1,5 @@
-print('Bem vindo, usuário!.')
-print('Infelizmente, ainda não temos dados geográficos')
+
+def carregar_camada():
+    print("\n--- Carregar camada geográfica ---")
+    print("Funcionalidade em desenvolvimento.")
+    print("Futuramente, será possível importar dados geográficos.")
