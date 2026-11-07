@@ -1,0 +1,1 @@
+Coloque aqui os dois arquivos GeoTIFF de elevação, com datas distintas e metadados conhecidos.
