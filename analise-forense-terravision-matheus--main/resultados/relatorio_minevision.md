@@ -1,10 +1,10 @@
 # Relatório — MineVision
 
 ## Identificação
-- **Área de estudo:** Serra dos Carajás, Pará
-- **Data de processamento:** 09/11/2026 10:10
-- **MDE anterior:** `anterior_ausentes.tif`
-- **MDE posterior:** `posterior_ausentes.tif`
+- **Área de estudo:** Serra dos Carajás, Paráshs
+- **Data de processamento:** 09/11/2026 11:51
+- **MDE anterior:** `anterior.tif`
+- **MDE posterior:** `posterior.tif`
 
 ## Objetivo
 Comparar dois modelos digitais de elevação (MDEs) espacialmente alinhados para identificar diferenças na superfície representada.
@@ -19,14 +19,14 @@ Valores negativos indicam uma superfície representada mais baixa no segundo mod
 ## Resultados numéricos
 | Indicador | Resultado |
 |---|---:|
-| Pixels válidos | 8 |
+| Pixels válidos | 9 |
 | Diferença média | 0.000 m |
 | Mediana | 0.000 m |
 | Mínima | -10.000 m |
 | Máxima | 10.000 m |
-| Desvio padrão | 6.124 m |
-| Percentil 5 | -8.250 m |
-| Percentil 95 | 8.250 m |
+| Desvio padrão | 5.774 m |
+| Percentil 5 | -8.000 m |
+| Percentil 95 | 8.000 m |
 
 ## Metadados espaciais
 - **CRS:** EPSG:4326
