@@ -1,12 +1,12 @@
 ﻿indicador,valor
-pixels_validos,9
+pixels_validos,8
 diferenca_media_m,0.0
 diferenca_mediana_m,0.0
-diferenca_minima_m,0.0
-diferenca_maxima_m,0.0
-desvio_padrao_m,0.0
-percentil_05_m,0.0
-percentil_95_m,0.0
+diferenca_minima_m,-10.0
+diferenca_maxima_m,10.0
+desvio_padrao_m,6.123724460601807
+percentil_05_m,-8.25
+percentil_95_m,8.25
 crs,EPSG:4326
 dimensoes,3 x 3
 resolucao_raster,"(0.001, 0.001)"
