@@ -2,9 +2,9 @@
 
 ## Identificação
 - **Área de estudo:** Serra dos Carajás, Pará
-- **Data de processamento:** 07/11/2026 11:26
+- **Data de processamento:** 09/11/2026 10:03
 - **MDE anterior:** `anterior.tif`
-- **MDE posterior:** `posterior.tif`
+- **MDE posterior:** `posterior_crs.tif`
 
 ## Objetivo
 Comparar dois modelos digitais de elevação (MDEs) espacialmente alinhados para identificar diferenças na superfície representada.
@@ -22,11 +22,11 @@ Valores negativos indicam uma superfície representada mais baixa no segundo mod
 | Pixels válidos | 9 |
 | Diferença média | 0.000 m |
 | Mediana | 0.000 m |
-| Mínima | -10.000 m |
-| Máxima | 10.000 m |
-| Desvio padrão | 5.774 m |
-| Percentil 5 | -8.000 m |
-| Percentil 95 | 8.000 m |
+| Mínima | 0.000 m |
+| Máxima | 0.000 m |
+| Desvio padrão | 0.000 m |
+| Percentil 5 | 0.000 m |
+| Percentil 95 | 0.000 m |
 
 ## Metadados espaciais
 - **CRS:** EPSG:4326
