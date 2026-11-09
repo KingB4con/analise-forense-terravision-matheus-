@@ -1,0 +1,15 @@
+﻿indicador,valor
+pixels_validos,8
+diferenca_media_m,0.0
+diferenca_mediana_m,0.0
+diferenca_minima_m,-10.0
+diferenca_maxima_m,10.0
+desvio_padrao_m,6.123724460601807
+percentil_05_m,-8.25
+percentil_95_m,8.25
+crs,EPSG:4326
+dimensoes,3 x 3
+resolucao_raster,"(0.001, 0.001)"
+limites_raster,"BoundingBox(left=-50.0, bottom=-5.003, right=-49.997, top=-5.0)"
+nodata_anterior,-9999.0
+nodata_posterior,-9999.0
