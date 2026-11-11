@@ -7,6 +7,15 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 
+from PySide6.QtWidgets import (
+    QLineEdit,
+    QPlainTextEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox
+)
+
+from areas import listar_areas, cadastrar_area, excluir_area
 
 class MineVisionApp(QMainWindow):
     def __init__(self):
@@ -48,7 +57,7 @@ class MineVisionApp(QMainWindow):
 
         menu_layout.addSpacing(30)
 
-        paginas = [
+        pagina = [
             ("⌂", "Dashboard"),
             ("▦", "Áreas de estudo"),
             ("◎", "Visualizador"),
@@ -58,7 +67,7 @@ class MineVisionApp(QMainWindow):
 
         self.conteudo = QStackedWidget()
 
-        for indice, (icone, nome) in enumerate(paginas):
+        for indice, (icone, nome) in enumerate(pagina):
             botao = QPushButton(f"{icone}    {nome}")
             botao.setObjectName("menu_button")
             botao.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -88,8 +97,6 @@ class MineVisionApp(QMainWindow):
         area_layout = QVBoxLayout(self.area_principal)
         area_layout.setContentsMargins(32, 28, 32, 28)
 
-        self.conteudo.addWidget(self.criar_dashboard())
-
         nomes = [
             "Áreas de estudo",
             "Visualizador geográfico",
@@ -97,7 +104,12 @@ class MineVisionApp(QMainWindow):
             "Relatórios",
         ]
 
-        for nome in nomes:
+        self.conteudo = QStackedWidget()
+
+        self.conteudo.addWidget(self.criar_dashboard())
+        self.conteudo.addWidget(self.criar_pagina_areas())
+
+        for nome in nomes[1:]:
             self.conteudo.addWidget(self.criar_pagina_vazia(nome))
 
         area_layout.addWidget(self.conteudo)
@@ -191,6 +203,110 @@ class MineVisionApp(QMainWindow):
         layout.addWidget(aviso)
 
         return pagina
+
+    def criar_pagina_areas(self):
+        pagina = QWidget()
+        layout = QVBoxLayout(pagina)
+
+        titulo = QLabel("Áreas de estudo")
+        titulo.setObjectName("titulo")
+        layout.addWidget(titulo)
+
+        descricao = QLabel("Cadastre e gerencie suas áreas monitoradas.")
+        descricao.setObjectName("descricao")
+        layout.addWidget(descricao)
+
+        self.campo_nome = QLineEdit()
+        self.campo_nome.setPlaceholderText("Nome da área")
+
+        self.campo_localizacao = QLineEdit()
+        self.campo_localizacao.setPlaceholderText("Ex: Serra dos Carajás, Pará")
+
+        self.campo_descricao = QPlainTextEdit()
+        self.campo_descricao.setPlaceholderText("Descrição da área (opcional)")
+        self.campo_descricao.setMaximumHeight(90)
+
+        layout.addWidget(QLabel("Nome"))
+        layout.addWidget(self.campo_nome)
+
+        layout.addWidget(QLabel("Localização"))
+        layout.addWidget(self.campo_localizacao)
+
+        layout.addWidget(QLabel("Descrição"))
+        layout.addWidget(self.campo_descricao)
+
+        botao_cadastrar = QPushButton("Cadastrar área")
+        botao_cadastrar.clicked.connect(self.salvar_area)
+        layout.addWidget(botao_cadastrar)
+
+        layout.addWidget(QLabel("Áreas cadastradas"))
+
+        self.lista_areas = QListWidget()
+        layout.addWidget(self.lista_areas)
+
+        botao_excluir = QPushButton("Excluir área selecionada")
+        botao_excluir.clicked.connect(self.remover_area)
+        layout.addWidget(botao_excluir)
+
+        self.atualizar_lista_areas()
+
+        return pagina
+
+
+    def atualizar_lista_areas(self):
+        self.lista_areas.clear()
+
+        for area in listar_areas():
+            item = QListWidgetItem(
+                f"{area['nome']} — {area['localizacao']}"
+            )
+
+            item.setData(Qt.ItemDataRole.UserRole, area["id"])
+            self.lista_areas.addItem(item)
+
+
+    def salvar_area(self):
+        try:
+            cadastrar_area(
+                self.campo_nome.text(),
+                self.campo_localizacao.text(),
+                self.campo_descricao.toPlainText()
+            )
+
+            self.campo_nome.clear()
+            self.campo_localizacao.clear()
+            self.campo_descricao.clear()
+
+            self.atualizar_lista_areas()
+
+            QMessageBox.information(
+                self, "MineVision", "Área cadastrada com sucesso!"
+            )
+
+        except (ValueError, OSError) as erro:
+            QMessageBox.warning(self, "Erro", str(erro))
+
+
+    def remover_area(self):
+        item = self.lista_areas.currentItem()
+
+        if item is None:
+            QMessageBox.warning(
+                self, "MineVision", "Selecione uma área primeiro."
+            )
+            return
+
+        area_id = item.data(Qt.ItemDataRole.UserRole)
+
+        resposta = QMessageBox.question(
+            self,
+            "Confirmar exclusão",
+            "Deseja realmente excluir esta área?"
+        )
+
+        if resposta == QMessageBox.StandardButton.Yes:
+            excluir_area(area_id)
+            self.atualizar_lista_areas()
 
     def criar_pagina_vazia(self, nome):
         pagina = QWidget()
@@ -346,7 +462,6 @@ class MineVisionApp(QMainWindow):
 
         self.sidebar.setObjectName("sidebar")
         self.botao_tema.setText(botao_tema)
-
 
 def iniciar_interface():
     app = QApplication(sys.argv)
