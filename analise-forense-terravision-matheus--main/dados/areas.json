@@ -1,0 +1,48 @@
+[
+    {
+        "id": "80a50f6d-56f3-4d26-94bb-efc6332e3b0d",
+        "nome": "Mina de Bingham Canyon",
+        "localizacao": "Utah, Estados Unidos",
+        "descricao": "Escavação de uma das maiores cavas a céu aberto do mundo, com mais de 1,2 km de profundidade e 4 km de largura, transformando uma antiga montanha em um imenso anfiteatro escalonado.",
+        "rasters": [
+            {
+                "nome": "anterior.tif",
+                "caminho": "C:\\Users\\User\\OneDrive\\Desktop\\Minevision\\analise-forense-terravision-matheus--main\\dados\\entrada\\anterior.tif",
+                "largura": 3,
+                "altura": 3,
+                "bandas": 1,
+                "crs": "EPSG:4326",
+                "resolucao": [
+                    0.001,
+                    0.001
+                ],
+                "tipo_dado": [
+                    "float32"
+                ],
+                "nodata": -9999.0
+            },
+            {
+                "nome": "posterior.tif",
+                "caminho": "C:\\Users\\User\\OneDrive\\Desktop\\Minevision\\analise-forense-terravision-matheus--main\\dados\\entrada\\posterior.tif",
+                "largura": 3,
+                "altura": 3,
+                "bandas": 1,
+                "crs": "EPSG:4326",
+                "resolucao": [
+                    0.001,
+                    0.001
+                ],
+                "tipo_dado": [
+                    "float32"
+                ],
+                "nodata": -9999.0
+            }
+        ]
+    },
+    {
+        "id": "63a231f2-08b4-4136-ac91-d50ecb6bb31d",
+        "nome": "Mina de Chuquicamata",
+        "localizacao": "Antofagasta, Chile",
+        "descricao": "Criação de uma cratera elíptica de quase 5 km de extensão e cerca de 1 km de profundidade, acompanhada por gigantescas pilhas de estéril que formam novas serras artificiais no Deserto do Atacama."
+    }
+]

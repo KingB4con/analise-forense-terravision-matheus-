@@ -1,5 +1,7 @@
 import sys
 
+from pathlib import Path
+
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame,
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
@@ -15,7 +17,16 @@ from PySide6.QtWidgets import (
     QMessageBox
 )
 
-from areas import listar_areas, cadastrar_area, excluir_area
+from PySide6.QtWidgets import QFileDialog
+from src.raster import ler_metadados
+
+from areas import (
+    listar_areas,
+    cadastrar_area,
+    excluir_area,
+    listar_rasters,
+    registrar_raster
+)
 
 class MineVisionApp(QMainWindow):
     def __init__(self):
@@ -204,6 +215,7 @@ class MineVisionApp(QMainWindow):
 
         return pagina
 
+    
     def criar_pagina_areas(self):
         pagina = QWidget()
         layout = QVBoxLayout(pagina)
@@ -242,15 +254,28 @@ class MineVisionApp(QMainWindow):
         layout.addWidget(QLabel("Áreas cadastradas"))
 
         self.lista_areas = QListWidget()
+        self.lista_areas.currentItemChanged.connect(
+            self.atualizar_lista_rasters
+        )
         layout.addWidget(self.lista_areas)
 
         botao_excluir = QPushButton("Excluir área selecionada")
         botao_excluir.clicked.connect(self.remover_area)
         layout.addWidget(botao_excluir)
 
+        layout.addWidget(QLabel("Arquivos GeoTIFF da área selecionada"))
+
+        self.lista_rasters = QListWidget()
+        layout.addWidget(self.lista_rasters)
+
+        botao_importar = QPushButton("Importar GeoTIFF")
+        botao_importar.clicked.connect(self.importar_raster)
+        layout.addWidget(botao_importar)
+
         self.atualizar_lista_areas()
 
         return pagina
+
 
 
     def atualizar_lista_areas(self):
@@ -264,6 +289,69 @@ class MineVisionApp(QMainWindow):
             item.setData(Qt.ItemDataRole.UserRole, area["id"])
             self.lista_areas.addItem(item)
 
+    
+    def atualizar_lista_rasters(self, *args):
+        self.lista_rasters.clear()
+
+        item = self.lista_areas.currentItem()
+
+        if item is None:
+            return
+
+        area_id = item.data(Qt.ItemDataRole.UserRole)
+
+        for raster in listar_rasters(area_id):
+            texto = (
+                f"{raster['nome']} — "
+                f"{raster['largura']}x{raster['altura']} pixels"
+            )
+
+            self.lista_rasters.addItem(texto)
+
+
+    def importar_raster(self):
+        item = self.lista_areas.currentItem()
+
+        if item is None:
+            QMessageBox.warning(
+                self,
+                "MineVision",
+                "Selecione uma área antes de importar arquivos."
+            )
+            return
+
+        area_id = item.data(Qt.ItemDataRole.UserRole)
+
+        arquivos, _ = QFileDialog.getOpenFileNames(
+            self,
+            "Selecionar arquivos GeoTIFF",
+            "",
+            "GeoTIFF (*.tif *.tiff)"
+        )
+
+        if not arquivos:
+            return
+
+        importados = 0
+        erros = []
+
+        for caminho in arquivos:
+            try:
+                metadados = ler_metadados(caminho)
+                registrar_raster(area_id, metadados)
+                importados += 1
+
+            except Exception as erro:
+                erros.append(f"{Path(caminho).name}: {erro}")
+
+        self.atualizar_lista_rasters()
+
+        mensagem = f"{importados} arquivo(s) importado(s) com sucesso."
+
+        if erros:
+            mensagem += "\n\nProblemas encontrados:\n" + "\n".join(erros)
+
+        QMessageBox.information(self, "Importação GeoTIFF", mensagem)
 
     def salvar_area(self):
         try:
