@@ -3,6 +3,21 @@ import sys
 from pathlib import Path
 
 from PySide6.QtWidgets import (
+    QComboBox,
+    QDoubleSpinBox,
+    QGraphicsView,
+    QGraphicsScene
+)
+
+from PySide6.QtGui import (
+    QImage,
+    QPixmap,
+    QPainter
+)
+
+import numpy as np
+
+from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QFrame,
     QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QStackedWidget
@@ -20,6 +35,9 @@ from PySide6.QtWidgets import (
 from PySide6.QtWidgets import QFileDialog
 from src.raster import ler_metadados
 
+from src.raster import carregar_imagem_raster
+from script import obter_configuracao_lod
+
 from areas import (
     listar_areas,
     cadastrar_area,
@@ -27,6 +45,87 @@ from areas import (
     listar_rasters,
     registrar_raster
 )
+
+
+class VisualizadorRaster(QGraphicsView):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.cena = QGraphicsScene(self)
+        self.setScene(self.cena)
+
+        self.item_imagem = None
+        self.nivel_zoom = 0
+
+        self.setRenderHint(
+            QPainter.RenderHint.SmoothPixmapTransform
+        )
+
+        self.setDragMode(
+            QGraphicsView.DragMode.ScrollHandDrag
+        )
+
+        self.setTransformationAnchor(
+            QGraphicsView.ViewportAnchor.AnchorUnderMouse
+        )
+
+        self.setResizeAnchor(
+            QGraphicsView.ViewportAnchor.AnchorViewCenter
+        )
+
+        self.setBackgroundBrush(Qt.GlobalColor.darkGray)
+
+    def exibir_imagem(self, imagem):
+        self.cena.clear()
+        self.nivel_zoom = 0
+
+        pixmap = QPixmap.fromImage(imagem)
+
+        self.item_imagem = self.cena.addPixmap(pixmap)
+
+        self.cena.setSceneRect(
+            self.item_imagem.boundingRect()
+        )
+
+        self.ajustar_imagem()
+
+    def ajustar_imagem(self):
+        if self.item_imagem is None:
+            return
+
+        self.nivel_zoom = 0
+
+        self.fitInView(
+            self.item_imagem,
+            Qt.AspectRatioMode.KeepAspectRatio
+        )
+
+    def wheelEvent(self, evento):
+        if self.item_imagem is None:
+            return
+
+        fator = 1.25
+
+        if evento.angleDelta().y() > 0:
+            if self.nivel_zoom >= 12:
+                return
+
+            self.scale(fator, fator)
+            self.nivel_zoom += 1
+
+        else:
+            if self.nivel_zoom <= -5:
+                return
+
+            self.scale(1 / fator, 1 / fator)
+            self.nivel_zoom -= 1
+
+    def resizeEvent(self, evento):
+        super().resizeEvent(evento)
+
+        if self.item_imagem is not None and self.nivel_zoom == 0:
+            self.ajustar_imagem()
+
 
 class MineVisionApp(QMainWindow):
     def __init__(self):
@@ -120,8 +219,14 @@ class MineVisionApp(QMainWindow):
         self.conteudo.addWidget(self.criar_dashboard())
         self.conteudo.addWidget(self.criar_pagina_areas())
 
-        for nome in nomes[1:]:
-            self.conteudo.addWidget(self.criar_pagina_vazia(nome))
+        self.conteudo.addWidget(
+            self.criar_pagina_visualizador()
+        )
+
+        for nome in nomes[2:]: 
+            self.conteudo.addWidget(
+                self.criar_pagina_vazia(nome)
+            )
 
         area_layout.addWidget(self.conteudo)
         layout_principal.addWidget(self.area_principal)
@@ -427,8 +532,198 @@ class MineVisionApp(QMainWindow):
 
         return pagina
 
+    def criar_pagina_visualizador(self):
+        pagina = QWidget()
+        layout = QVBoxLayout(pagina)
+
+        titulo = QLabel("Visualizador geográfico")
+        titulo.setObjectName("titulo")
+        layout.addWidget(titulo)
+
+        descricao = QLabel(
+            "Explore imagens georreferenciadas e dados de mineração."
+        )
+        descricao.setObjectName("descricao")
+        layout.addWidget(descricao)
+
+        controles = QHBoxLayout()
+
+        self.combo_area_visualizador = QComboBox()
+        self.combo_area_visualizador.addItem("Selecione uma área")
+
+        self.combo_raster_visualizador = QComboBox()
+        self.combo_raster_visualizador.addItem("Selecione um GeoTIFF")
+
+        self.altitude_visualizador = QDoubleSpinBox()
+        self.altitude_visualizador.setRange(0, 1000000)
+        self.altitude_visualizador.setDecimals(0)
+        self.altitude_visualizador.setValue(5000)
+        self.altitude_visualizador.setSuffix(" m")
+
+        botao_exibir = QPushButton("Carregar imagem")
+        botao_exibir.clicked.connect(
+            self.exibir_raster_visualizador
+        )
+
+        botao_ajustar = QPushButton("Ajustar à tela")
+        botao_ajustar.clicked.connect(
+            lambda: self.visualizador.ajustar_imagem()
+        )
+
+        controles.addWidget(self.combo_area_visualizador)
+        controles.addWidget(self.combo_raster_visualizador)
+        controles.addWidget(self.altitude_visualizador)
+        controles.addWidget(botao_exibir)
+        controles.addWidget(botao_ajustar)
+
+        layout.addLayout(controles)
+
+        self.combo_area_visualizador.currentIndexChanged.connect(
+            self.atualizar_rasters_visualizador
+        )
+
+        self.visualizador = VisualizadorRaster()
+
+        layout.addWidget(self.visualizador, 1)
+
+        self.info_lod = QLabel(
+            "Selecione uma área e um GeoTIFF para começar."
+        )
+        self.info_lod.setObjectName("descricao")
+        layout.addWidget(self.info_lod)
+
+        self.atualizar_areas_visualizador()
+
+        return pagina
+
+    def atualizar_areas_visualizador(self): 
+        self.combo_area_visualizador.clear()
+        self.combo_area_visualizador.addItem("Selecione uma área")
+
+        for area in listar_areas(): 
+            self.combo_area_visualizador.addItem(
+                area["nome"],
+                area["id"]
+            )
+
+        self.atualizar_rasters_visualizador()
+
+    def atualizar_rasters_visualizador(self, indice=None): 
+        self.combo_raster_visualizador.clear()
+        self.combo_raster_visualizador.addItem("Selecione um GeoTIFF")
+
+        area_id = self.combo_area_visualizador.currentData()
+
+        if not area_id: 
+            return
+
+        for raster in listar_rasters(area_id):
+            self.combo_raster_visualizador.addItem(
+                raster["nome"],
+                raster["caminho"]
+            )
+
+    def exibir_raster_visualizador(self):
+        caminho = self.combo_raster_visualizador.currentData()
+
+        if not caminho:
+            QMessageBox.warning(
+                self,
+                "MineVision",
+                "Selecione um GeoTIFF para visualizar."
+            )
+            return
+
+        try:
+            altitude = self.altitude_visualizador.value()
+
+            configuracao = obter_configuracao_lod(altitude)
+
+            imagem, extent, tipo, informacoes = carregar_imagem_raster(
+                caminho,
+                configuracao["max_dimensao"]
+            )
+
+            if tipo == "rgb":
+                dados = np.clip(
+                    imagem * 255,
+                    0,
+                    255
+                ).astype(np.uint8)
+
+                dados = np.ascontiguousarray(dados)
+
+                altura, largura, canais = dados.shape
+
+                imagem_qt = QImage(
+                    dados.data,
+                    largura,
+                    altura,
+                    dados.strides[0],
+                    QImage.Format.Format_RGB888
+                ).copy()
+
+            else:
+                valores = imagem.compressed()
+
+                if valores.size == 0:
+                    raise ValueError(
+                        "O raster não possui pixels válidos."
+                    )
+
+                minimo, maximo = np.percentile(
+                    valores,
+                    [2, 98]
+                )
+
+                if maximo <= minimo:
+                    maximo = minimo + 1
+
+                normalizada = np.clip(
+                    (imagem.filled(minimo) - minimo)
+                    / (maximo - minimo),
+                    0,
+                    1
+                )
+
+                dados = (
+                    normalizada * 255
+                ).astype(np.uint8)
+
+                dados = np.ascontiguousarray(dados)
+
+                altura, largura = dados.shape
+
+                imagem_qt = QImage(
+                    dados.data,
+                    largura,
+                    altura,
+                    dados.strides[0],
+                    QImage.Format.Format_Grayscale8
+                ).copy()
+
+            self.visualizador.exibir_imagem(imagem_qt)
+
+            self.info_lod.setText(
+                f"LoD: {configuracao['nivel']} | "
+                f"Altitude: {altitude:.0f} m | "
+                f"Imagem: {largura} x {altura} pixels | "
+                f"CRS: {informacoes['crs']}"
+            )
+
+        except Exception as erro:
+            QMessageBox.critical(
+                self,
+                "Erro na visualização",
+                str(erro)
+            )
+
+
     def mudar_pagina(self, indice):
         self.conteudo.setCurrentIndex(indice)
+
+        if indice == 2:
+            self.atualizar_areas_visualizador()
 
         for i, botao in enumerate(self.botoes_menu):
             botao.setProperty("active", i == indice)

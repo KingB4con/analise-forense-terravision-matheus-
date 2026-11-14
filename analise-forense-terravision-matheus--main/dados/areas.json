@@ -36,6 +36,22 @@
                     "float32"
                 ],
                 "nodata": -9999.0
+            },
+            {
+                "nome": "anterior.tif",
+                "caminho": "C:\\Users\\User\\OneDrive\\Documentos\\Programação\\Projetos\\Minevision\\analise-forense-terravision-matheus--main\\dados\\entrada\\anterior.tif",
+                "largura": 3,
+                "altura": 3,
+                "bandas": 1,
+                "crs": "EPSG:4326",
+                "resolucao": [
+                    0.001,
+                    0.001
+                ],
+                "tipo_dado": [
+                    "float32"
+                ],
+                "nodata": -9999.0
             }
         ]
     },
@@ -43,6 +59,40 @@
         "id": "63a231f2-08b4-4136-ac91-d50ecb6bb31d",
         "nome": "Mina de Chuquicamata",
         "localizacao": "Antofagasta, Chile",
-        "descricao": "Criação de uma cratera elíptica de quase 5 km de extensão e cerca de 1 km de profundidade, acompanhada por gigantescas pilhas de estéril que formam novas serras artificiais no Deserto do Atacama."
+        "descricao": "Criação de uma cratera elíptica de quase 5 km de extensão e cerca de 1 km de profundidade, acompanhada por gigantescas pilhas de estéril que formam novas serras artificiais no Deserto do Atacama.",
+        "rasters": [
+            {
+                "nome": "anterior.tif",
+                "caminho": "C:\\Users\\User\\OneDrive\\Documentos\\Programação\\Projetos\\Minevision\\analise-forense-terravision-matheus--main\\dados\\entrada\\anterior.tif",
+                "largura": 3,
+                "altura": 3,
+                "bandas": 1,
+                "crs": "EPSG:4326",
+                "resolucao": [
+                    0.001,
+                    0.001
+                ],
+                "tipo_dado": [
+                    "float32"
+                ],
+                "nodata": -9999.0
+            },
+            {
+                "nome": "posterior.tif",
+                "caminho": "C:\\Users\\User\\OneDrive\\Documentos\\Programação\\Projetos\\Minevision\\analise-forense-terravision-matheus--main\\dados\\entrada\\posterior.tif",
+                "largura": 3,
+                "altura": 3,
+                "bandas": 1,
+                "crs": "EPSG:4326",
+                "resolucao": [
+                    0.001,
+                    0.001
+                ],
+                "tipo_dado": [
+                    "float32"
+                ],
+                "nodata": -9999.0
+            }
+        ]
     }
 ]

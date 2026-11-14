@@ -145,9 +145,9 @@ A captura deve mostrar elementos identificáveis do terreno, como áreas de expl
 As imagens abaixo demonstram diferentes escalas de visualização
 da região de Serra Norte, em Carajás.
 
-**Visão regional — 19 km**
+**Visão regional — 20 km**
 
-![Serra Norte a 19 km](docs/imagens/serra-norte-20km.png)
+![Serra Norte a 20 km](docs/imagens/serra-norte-20km.png)
 
 **Visão intermediária — 5 km**
 

@@ -1,10 +1,32 @@
+def obter_configuracao_lod(altitude):
+    altitude = float(altitude)
+
+    if altitude < 0:
+        raise ValueError("A altitude não pode ser negativa.")
+
+    if altitude > 10000:
+        return {
+            "nivel": "BAIXA RESOLUÇÃO",
+            "max_dimensao": 512,
+            "elemento": "Visão regional da área de mineração."
+        }
+
+    elif altitude >= 1000:
+        return {
+            "nivel": "MÉDIA RESOLUÇÃO",
+            "max_dimensao": 1024,
+            "elemento": "Visão intermediária do relevo e das estruturas."
+        }
+
+    else:
+        return {
+            "nivel": "ALTA RESOLUÇÃO",
+            "max_dimensao": 1800,
+            "elemento": "Detalhamento de cavas, bancadas e estruturas."
+        }
+
 
 def carregar_camada_satelite(lista_altitudes):
-    """
-    Simula a seleção do nível de detalhe (LoD)
-    conforme a altitude da câmera virtual.
-    """
-
     if len(lista_altitudes) < 5:
         raise ValueError(
             "Informe pelo menos 5 valores de altitude."
@@ -15,46 +37,26 @@ def carregar_camada_satelite(lista_altitudes):
     print("\n--- SISTEMA DE NÍVEL DE DETALHE - MINEVISION ---")
 
     for altitude in lista_altitudes:
-        altitude = float(altitude)
-
-        if altitude < 0:
-            raise ValueError("A altitude não pode ser negativa.")
-
-        if altitude > 10000:
-            nivel = "BAIXA RESOLUÇÃO"
-            elemento = "Mosaico geral da Terra e localização regional das áreas de mineração."
-
-        elif altitude >= 1000:
-            nivel = "MÉDIA RESOLUÇÃO"
-            elemento = "Mosaico regional de mineração, vegetação, relevo e limites das áreas de exploração."
-
-        else:
-            nivel = "ALTA RESOLUÇÃO"
-            elemento = "Topografia detalhada de cavas, bancadas, pilhas de rejeitos e estruturas de mineração."
+        configuracao = obter_configuracao_lod(altitude)
 
         resultado = {
-            "altitude": altitude,
-            "nivel": nivel,
-            "elemento": elemento
+            "altitude": float(altitude),
+            **configuracao
         }
 
         resultados.append(resultado)
 
-        print(f"\nAltitude: {altitude:.2f} metros")
-        print(f"Nível: {nivel}")
-        print(f"Renderização: {elemento}")
+        print(f"\nAltitude: {resultado['altitude']:.2f} metros")
+        print(f"Nível: {resultado['nivel']}")
+        print(f"Renderização: {resultado['elemento']}")
 
     return resultados
 
 
 if __name__ == "__main__":
     altitudes_teste = [
-        25000,
-        15000,
-        8000,
-        3000,
-        500,
-        100
+        25000, 15000, 8000,
+        3000, 500, 100
     ]
 
     carregar_camada_satelite(altitudes_teste)
