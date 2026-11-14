@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import (
     QImage,
     QPixmap,
-    QPainter
+    QPainter,
+    QImageReader
 )
 
 import numpy as np
@@ -565,6 +566,11 @@ class MineVisionApp(QMainWindow):
             self.exibir_raster_visualizador
         )
 
+        botao_abrir = QPushButton("Abrir imagem")
+        botao_abrir.clicked.connect(
+            self.selecionar_imagem_visualizador
+        )
+
         botao_ajustar = QPushButton("Ajustar à tela")
         botao_ajustar.clicked.connect(
             lambda: self.visualizador.ajustar_imagem()
@@ -574,6 +580,7 @@ class MineVisionApp(QMainWindow):
         controles.addWidget(self.combo_raster_visualizador)
         controles.addWidget(self.altitude_visualizador)
         controles.addWidget(botao_exibir)
+        controles.addWidget(botao_abrir)
         controles.addWidget(botao_ajustar)
 
         layout.addLayout(controles)
@@ -626,90 +633,125 @@ class MineVisionApp(QMainWindow):
     def exibir_raster_visualizador(self):
         caminho = self.combo_raster_visualizador.currentData()
 
-        if not caminho:
+        if not caminho: 
             QMessageBox.warning(
                 self,
                 "MineVision",
-                "Selecione um GeoTIFF para visualizar."
+                "Selecione uma imagem para visualizar."
             )
             return
+        
+        try:  
+            extensao = Path(caminho).suffix.lower()
 
-        try:
-            altitude = self.altitude_visualizador.value()
+            # IMAGENS GEOREFERENCIADAS: TIFF
+            if extensao in (".tif", ".tiff"):
 
-            configuracao = obter_configuracao_lod(altitude)
+                altitude = self.altitude_visualizador.value()
 
-            imagem, extent, tipo, informacoes = carregar_imagem_raster(
-                caminho,
-                configuracao["max_dimensao"]
-            )
+                configuracao = obter_configuracao_lod(altitude)
 
-            if tipo == "rgb":
-                dados = np.clip(
-                    imagem * 255,
-                    0,
-                    255
-                ).astype(np.uint8)
+                imagem, extent, tipo, informacoes = carregar_imagem_raster(
+                    caminho, 
+                    configuracao["max_dimensao"]
+                )
 
-                dados = np.ascontiguousarray(dados)
+                if tipo == "rgb":
+                    dados = np.clip(
+                        imagem * 255,
+                        0,
+                        255
+                    ).astyoe(np.unit8)
 
-                altura, largura, canais = dados.shape
+                    dados = np.ascontiguousarray(dados)
 
-                imagem_qt = QImage(
-                    dados.data,
-                    largura,
-                    altura,
-                    dados.strides[0],
-                    QImage.Format.Format_RGB888
-                ).copy()
+                    altura, largura, canais = dados.shape
 
-            else:
-                valores = imagem.compressed()
+                    imagem_qt = QImage(
+                        dados.data,
+                        largura,
+                        altura,
+                        dados.strides[0],
+                        QImage.Format,Format_RGB888
+                    ).copy()
 
-                if valores.size == 0:
-                    raise ValueError(
-                        "O raster não possui pixels válidos."
+                else: 
+                    valores = imagem.compressed()
+
+                    if valores.size == 0: 
+                        raise ValueError(
+                            "O raster não possui pixels válidos"
+                        )
+
+                    minimo, maximo = np.percentile(
+                        valores,
+                        [2, 98]
                     )
 
-                minimo, maximo = np.percentile(
-                    valores,
-                    [2, 98]
+                    if maximo <= minimo: 
+                        maximo = minimo + 1
+
+                    normalizada = np.clip(
+                        (imagem.filled(minimo) - minimo)
+                        / (maximo - minimo),
+                        0,
+                        1
+                    )
+
+                    dados = (
+                        normalizada * 255
+                    ).astype(np.uint8)
+
+                    dados = np.ascontiguousarray(dados)
+
+                    altura, largura = dados.shape
+
+                    imagem_qt = QImage(
+                        dados.data,
+                        largura,
+                        altura,
+                        dados.strides[0],
+                        QImage.Format.Format_Grayscale8
+                    ).copy()
+
+                self.visualizador.exibir_imagem(imagem_qt)
+
+                self.info_lod.setText(
+                    f"LoD: {configuracao['nivel']} | "
+                    f"Altitude: {altitude:.0f} m | "
+                    f"Imagem: {largura} x {altura} pixels | "
+                    f"CRS: {informacoes['crs']}"
                 )
 
-                if maximo <= minimo:
-                    maximo = minimo + 1
+            # IMAGENS COMUNS: PNG, JPG E JPEG
+            elif extensao in (".png", ".jpg", ".jpeg"):
 
-                normalizada = np.clip(
-                    (imagem.filled(minimo) - minimo)
-                    / (maximo - minimo),
-                    0,
-                    1
+                leitor = QImageReader(caminho)
+                leitor.setAutoTransform(True)
+
+                imagem_qt = leitor.read()
+
+                if imagem_qt.isNull():
+                    raise ValueError(
+                        f"Não foi possível abrir a imagem: "
+                        f"{leitor.errorString()}"
+                    )
+
+                largura = imagem_qt.width()
+                altura = imagem_qt.height()
+
+                self.visualizador.exibir_imagem(imagem_qt)
+
+                self.info_lod.setText(
+                    f"Imagem comum | "
+                    f"{largura} x {altura} pixels | "
+                    f"Sem georreferenciamento"
                 )
 
-                dados = (
-                    normalizada * 255
-                ).astype(np.uint8)
-
-                dados = np.ascontiguousarray(dados)
-
-                altura, largura = dados.shape
-
-                imagem_qt = QImage(
-                    dados.data,
-                    largura,
-                    altura,
-                    dados.strides[0],
-                    QImage.Format.Format_Grayscale8
-                ).copy()
-
-            self.visualizador.exibir_imagem(imagem_qt)
-
-            self.info_lod.setText(
-                f"LoD: {configuracao['nivel']} | "
-                f"Altitude: {altitude:.0f} m | "
-                f"Imagem: {largura} x {altura} pixels | "
-                f"CRS: {informacoes['crs']}"
-            )
+            else:
+                raise ValueError(
+                    "Formato de imagem não suportado."
+                )
 
         except Exception as erro:
             QMessageBox.critical(
@@ -717,7 +759,6 @@ class MineVisionApp(QMainWindow):
                 "Erro na visualização",
                 str(erro)
             )
-
 
     def mudar_pagina(self, indice):
         self.conteudo.setCurrentIndex(indice)
@@ -845,6 +886,28 @@ class MineVisionApp(QMainWindow):
 
         self.sidebar.setObjectName("sidebar")
         self.botao_tema.setText(botao_tema)
+
+    def selecionar_imagem_visualizador(self): 
+        caminho, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Selecionar imagem",
+            "",
+            "Imagens (*.tif *.tiff *.png *.jpg *.jpeg)"
+        )
+        if not caminho: 
+            return
+        indice = self.combo_raster_visualizador.findData(caminho)
+
+        if indice == -1:
+            nome = Path(caminho).name
+
+            self.combo_raster_visualizador.addItem(
+                nome,
+                caminho
+            )
+
+            indice = self.combo_raster_visualizador.count() -1
+        self.combo_raster_visualizador.setCurrentIndex(indice)
 
 def iniciar_interface():
     app = QApplication(sys.argv)
